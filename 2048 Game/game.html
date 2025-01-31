@@ -188,8 +188,10 @@
         let timerInterval;
         let grid = [];
         let isGameActive = true;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const minSwipeDistance = 30;
 
-        // Initialize game
         function initGame() {
             document.getElementById('best-score').textContent = bestScore;
             if(gameMode === 'original') {
@@ -199,19 +201,16 @@
             } else {
                 document.getElementById('timerBox').style.display = 'none';
             }
-
             createGrid();
             addNewTile();
             addNewTile();
             setupInput();
         }
 
-        // Create game grid
         function createGrid() {
             const gridContainer = document.getElementById('grid');
             gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
             grid = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
-
             gridContainer.innerHTML = '';
             for(let i = 0; i < gridSize * gridSize; i++) {
                 const cell = document.createElement('div');
@@ -220,7 +219,6 @@
             }
         }
 
-        // Add new tile to grid
         function addNewTile() {
             const emptyCells = [];
             for(let i = 0; i < gridSize; i++) {
@@ -231,11 +229,10 @@
             if(emptyCells.length > 0) {
                 const {x, y} = emptyCells[Math.floor(Math.random() * emptyCells.length)];
                 grid[x][y] = Math.random() < 0.9 ? 2 : 4;
+                updateGridDisplay();
             }
-            updateGridDisplay();
         }
 
-        // Update grid display
         function updateGridDisplay() {
             const cells = document.getElementsByClassName('grid-cell');
             for(let i = 0; i < gridSize; i++) {
@@ -248,24 +245,27 @@
             }
         }
 
-        // Get tile color based on value
         function getTileColor(value) {
             const colors = {
-                2: '#00c6ff', 4: '#0072ff', 8: '#00b8d4',
-                16: '#0091ea', 32: '#2962ff', 64: '#304ffe',
-                128: '#6200ea', 256: '#aa00ff', 512: '#d500f9',
-                1024: '#c51162', 2048: '#ff1744'
+                2: 'rgba(0, 198, 255, 0.3)', 
+                4: 'rgba(0, 114, 255, 0.4)',
+                8: 'rgba(0, 184, 212, 0.5)',
+                16: 'rgba(0, 145, 234, 0.6)',
+                32: 'rgba(41, 98, 255, 0.7)',
+                64: 'rgba(48, 79, 254, 0.8)',
+                128: 'rgba(98, 0, 234, 0.9)',
+                256: 'rgba(170, 0, 255, 0.9)',
+                512: 'rgba(213, 0, 249, 0.9)',
+                1024: 'rgba(197, 17, 98, 0.9)',
+                2048: 'rgba(255, 23, 68, 0.9)'
             };
             return colors[value] || '#2a2d35';
         }
 
-        // Handle input
         function setupInput() {
             document.addEventListener('keydown', handleKeyPress);
             
-            let touchStartX = 0;
-            let touchStartY = 0;
-            
+            // Touch events
             document.addEventListener('touchstart', e => {
                 touchStartX = e.touches[0].clientX;
                 touchStartY = e.touches[0].clientY;
@@ -274,15 +274,35 @@
             document.addEventListener('touchend', e => {
                 const touchEndX = e.changedTouches[0].clientX;
                 const touchEndY = e.changedTouches[0].clientY;
-                const dx = touchEndX - touchStartX;
-                const dy = touchEndY - touchStartY;
-                
-                if(Math.abs(dx) > Math.abs(dy)) {
-                    handleMove(dx > 0 ? 'right' : 'left');
-                } else {
-                    handleMove(dy > 0 ? 'down' : 'up');
-                }
+                handleSwipe(touchEndX, touchEndY);
             });
+
+            // Mouse events
+            document.addEventListener('mousedown', e => {
+                touchStartX = e.clientX;
+                touchStartY = e.clientY;
+            });
+            
+            document.addEventListener('mouseup', e => {
+                handleSwipe(e.clientX, e.clientY);
+            });
+        }
+
+        function handleSwipe(endX, endY) {
+            if(!isGameActive) return;
+            
+            const dx = endX - touchStartX;
+            const dy = endY - touchStartY;
+            const absDx = Math.abs(dx);
+            const absDy = Math.abs(dy);
+            
+            if(Math.max(absDx, absDy) < minSwipeDistance) return;
+            
+            if(absDx > absDy) {
+                handleMove(dx > 0 ? 'right' : 'left');
+            } else {
+                handleMove(dy > 0 ? 'down' : 'up');
+            }
         }
 
         function handleKeyPress(e) {
@@ -296,30 +316,93 @@
             if(directions[e.key]) handleMove(directions[e.key]);
         }
 
-        // Handle move logic
         function handleMove(direction) {
             if(!isGameActive) return;
             
-            const newGrid = JSON.parse(JSON.stringify(grid));
+            const prevGrid = JSON.stringify(grid);
             let moved = false;
-            let scoreIncrease = 0;
-
-            // Implement move logic based on direction
-            // (Left/Right/Up/Down movement and merging logic)
-            // This is simplified - actual implementation needs full movement logic
             
-            if(JSON.stringify(grid) !== JSON.stringify(newGrid)) {
-                grid = newGrid;
-                score += scoreIncrease;
-                document.getElementById('current-score').textContent = score;
-                if(score > bestScore) {
-                    bestScore = score;
-                    localStorage.setItem('bestScore', bestScore);
-                    document.getElementById('best-score').textContent = bestScore;
-                }
+            switch(direction) {
+                case 'left': moved = moveHorizontal(true); break;
+                case 'right': moved = moveHorizontal(false); break;
+                case 'up': moved = moveVertical(true); break;
+                case 'down': moved = moveVertical(false); break;
+            }
+            
+            if(moved) {
+                updateScores();
                 addNewTile();
                 checkGameOver();
                 checkWinCondition();
+            }
+        }
+
+        function moveHorizontal(left) {
+            let moved = false;
+            for(let i = 0; i < gridSize; i++) {
+                let row = grid[i].filter(cell => cell !== 0);
+                if(!left) row.reverse();
+                
+                // Merge cells
+                for(let j = 0; j < row.length - 1; j++) {
+                    if(row[j] === row[j + 1]) {
+                        row[j] *= 2;
+                        score += row[j];
+                        row.splice(j + 1, 1);
+                        row.push(0);
+                    }
+                }
+                
+                // Fill empty spaces
+                while(row.length < gridSize) row[left ? 'push' : 'unshift'](0);
+                if(!left) row.reverse();
+                
+                if(row.join(',') !== grid[i].join(',')) {
+                    moved = true;
+                    grid[i] = row;
+                }
+            }
+            return moved;
+        }
+
+        function moveVertical(up) {
+            let moved = false;
+            for(let j = 0; j < gridSize; j++) {
+                let column = [];
+                for(let i = 0; i < gridSize; i++) column.push(grid[i][j]);
+                
+                let newCol = column.filter(cell => cell !== 0);
+                if(!up) newCol.reverse();
+                
+                // Merge cells
+                for(let i = 0; i < newCol.length - 1; i++) {
+                    if(newCol[i] === newCol[i + 1]) {
+                        newCol[i] *= 2;
+                        score += newCol[i];
+                        newCol.splice(i + 1, 1);
+                        newCol.push(0);
+                    }
+                }
+                
+                // Fill empty spaces
+                while(newCol.length < gridSize) newCol[up ? 'push' : 'unshift'](0);
+                if(!up) newCol.reverse();
+                
+                // Update column
+                for(let i = 0; i < gridSize; i++) {
+                    if(grid[i][j] !== newCol[i]) moved = true;
+                    grid[i][j] = newCol[i];
+                }
+            }
+            return moved;
+        }
+
+        function updateScores() {
+            document.getElementById('current-score').textContent = score;
+            if(score > bestScore) {
+                bestScore = score;
+                localStorage.setItem('bestScore', bestScore);
+                document.getElementById('best-score').textContent = bestScore;
             }
         }
 
@@ -330,7 +413,21 @@
         }
 
         function checkGameOver() {
-            // Implement proper game over check
+            // Check for empty cells
+            if(grid.some(row => row.includes(0))) return false;
+            
+            // Check for possible merges
+            for(let i = 0; i < gridSize; i++) {
+                for(let j = 0; j < gridSize; j++) {
+                    const current = grid[i][j];
+                    if((j < gridSize-1 && current === grid[i][j+1]) ||
+                       (i < gridSize-1 && current === grid[i+1][j])) {
+                        return false;
+                    }
+                }
+            }
+            endGame('Game Over!');
+            return true;
         }
 
         function endGame(message) {
