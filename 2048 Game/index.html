@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048 Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1c20 0%, #0f1013 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #fff;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .title {
+            font-size: 64px;
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin: 20px 0 40px;
+            font-weight: 800;
+            text-shadow: 0 0 20px rgba(0, 198, 255, 0.3);
+            letter-spacing: 2px;
+        }
+
+        .menu-button {
+            width: 100%;
+            padding: 16px;
+            margin: 8px 0;
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0, 198, 255, 0.2);
+        }
+
+        .menu-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 198, 255, 0.3);
+            background: linear-gradient(45deg, #0072ff, #00c6ff);
+        }
+
+        .menu-button:active {
+            transform: translateY(1px);
+        }
+
+        .settings-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .settings-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #2a2d35 0%, #1a1c20 100%);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .settings-option {
+            margin: 20px 0;
+        }
+
+        .settings-option label {
+            display: block;
+            margin-bottom: 8px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .toggle-btn {
+            background: #2a2d35;
+            border: 2px solid #00c6ff;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+
+        .toggle-btn.active {
+            background: #00c6ff;
+            color: #fff;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            background: #2a2d35;
+            border: 2px solid #00c6ff;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        select option {
+            background: #2a2d35;
+            color: #fff;
+        }
+
+        .social-icons {
+            margin-top: auto;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .social-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 198, 255, 0.2);
+        }
+
+        .social-icon:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 198, 255, 0.3);
+        }
+
+        .social-icon img {
+            width: 24px;
+            height: 24px;
+            filter: brightness(0) invert(1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @media (max-width: 480px) {
+            .title {
+                font-size: 48px;
+            }
+            
+            .menu-button {
+                padding: 14px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">2048</h1>
+        <button class="menu-button" id="startButton">Start</button>
+        <button class="menu-button" onclick="showSettings()">Options</button>
+        <button class="menu-button" onclick="rateGame()">Rate</button>
+        <button class="menu-button" onclick="showMoreGames()">More Games</button>
+        <button class="menu-button" onclick="exitGame()">Exit</button>
+    </div>
+
+    <div class="settings-menu" id="settingsMenu">
+        <div class="settings-content">
+            <h2 style="color: #fff; margin-bottom: 20px; text-align: center; font-size: 24px;">Game Options</h2>
+            <div class="settings-option">
+                <label>Vibration</label>
+                <button class="toggle-btn active" onclick="toggleSetting('vibration')" id="vibrationBtn">On</button>
+            </div>
+            <div class="settings-option">
+                <label>Sound</label>
+                <button class="toggle-btn active" onclick="toggleSetting('sound')" id="soundBtn">On</button>
+            </div>
+            <div class="settings-option">
+                <label>Game Mode</label>
+                <select id="gameMode">
+                    <option value="original">Original</option>
+                    <option value="infinite">Infinite</option>
+                </select>
+            </div>
+            <div class="settings-option">
+                <label>Grid Size</label>
+                <select id="gridSize">
+                    <option value="4">Easy (4x4)</option>
+                    <option value="5">Medium (5x5)</option>
+                    <option value="6">Hard (6x6)</option>
+                </select>
+            </div>
+            <button class="menu-button" onclick="closeSettings()" style="margin-top: 20px;">Save & Close</button>
+        </div>
+    </div>
+
+    <div class="social-icons">
+        <a href="#" class="social-icon">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z'%3E%3C/path%3E%3C/svg%3E" alt="Twitter">
+        </a>
+        <a href="#" class="social-icon">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z'%3E%3C/path%3E%3C/svg%3E" alt="YouTube">
+        </a>
+        <a href="#" class="social-icon">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z'%3E%3C/path%3E%3C/svg%3E" alt="Facebook">
+        </a>
+        <a href="#" class="social-icon">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='2' y='2' width='20' height='20' rx='5' ry='5'%3E%3C/rect%3E%3Cpath d='M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z'%3E%3C/path%3E%3Cline x1='17.5' y1='6.5' x2='17.51' y2='6.5'%3E%3C/line%3E%3C/svg%3E" alt="Instagram">
+        </a>
+    </div>
+
+    <script>
+        function showSettings() {
+            document.getElementById('settingsMenu').style.display = 'block';
+            loadSettings();
+        }
+
+        function closeSettings() {
+            saveSettings();
+            document.getElementById('settingsMenu').style.display = 'none';
+        }
+
+        function toggleSetting(setting) {
+            const btn = document.getElementById(`${setting}Btn`);
+            const isActive = btn.classList.contains('active');
+            btn.classList.toggle('active');
+            btn.textContent = isActive ? 'Off' : 'On';
+            localStorage.setItem(setting, !isActive ? 'On' : 'Off');
+        }
+
+        function loadSettings() {
+            ['vibration', 'sound'].forEach(setting => {
+                const value = localStorage.getItem(setting) || 'On';
+                const btn = document.getElementById(`${setting}Btn`);
+                btn.textContent = value;
+                btn.classList.toggle('active', value === 'On');
+            });
+            document.getElementById('gameMode').value = localStorage.getItem('gameMode') || 'original';
+            document.getElementById('gridSize').value = localStorage.getItem('gridSize') || '4';
+        }
+
+        function saveSettings() {
+            localStorage.setItem('gameMode', document.getElementById('gameMode').value);
+            localStorage.setItem('gridSize', document.getElementById('gridSize').value);
+        }
+
+        document.getElementById('startButton').addEventListener('click', () => {
+            saveSettings();
+            window.location.href = `game.html?mode=${localStorage.getItem('gameMode')}&size=${localStorage.getItem('gridSize')}`;
+        });
+
+        function rateGame() {
+            // Implement rating functionality
+            alert('Rating feature coming soon!');
+        }
+
+        function showMoreGames() {
+            // Implement more games functionality
+            alert('More games coming soon!');
+        }
+
+        function exitGame() {
+            window.close();
+            // Fallback if window.close() is blocked
+            window.location.href = 'about:blank';
+        }
+
+        // Initialize settings on page load
+        loadSettings();
+    </script>
+</body>
+</html>
