@@ -338,64 +338,62 @@
         }
 
         function moveHorizontal(left) {
-            let moved = false;
-            for(let i = 0; i < gridSize; i++) {
-                let row = grid[i].filter(cell => cell !== 0);
-                if(!left) row.reverse();
-                
-                // Merge cells
-                for(let j = 0; j < row.length - 1; j++) {
-                    if(row[j] === row[j + 1]) {
-                        row[j] *= 2;
-                        score += row[j];
-                        row.splice(j + 1, 1);
-                        row.push(0);
-                    }
-                }
-                
-                // Fill empty spaces
-                while(row.length < gridSize) row[left ? 'push' : 'unshift'](0);
-                if(!left) row.reverse();
-                
-                if(row.join(',') !== grid[i].join(',')) {
-                    moved = true;
-                    grid[i] = row;
-                }
-            }
-            return moved;
-        }
+        let moved = false;
+        for (let i = 0; i < gridSize; i++) {
+            let row = grid[i].filter(cell => cell !== 0);
+            if (!left) row.reverse();
 
-        function moveVertical(up) {
-            let moved = false;
-            for(let j = 0; j < gridSize; j++) {
-                let column = [];
-                for(let i = 0; i < gridSize; i++) column.push(grid[i][j]);
-                
-                let newCol = column.filter(cell => cell !== 0);
-                if(!up) newCol.reverse();
-                
-                // Merge cells
-                for(let i = 0; i < newCol.length - 1; i++) {
-                    if(newCol[i] === newCol[i + 1]) {
-                        newCol[i] *= 2;
-                        score += newCol[i];
-                        newCol.splice(i + 1, 1);
-                        newCol.push(0);
-                    }
-                }
-                
-                // Fill empty spaces
-                while(newCol.length < gridSize) newCol[up ? 'push' : 'unshift'](0);
-                if(!up) newCol.reverse();
-                
-                // Update column
-                for(let i = 0; i < gridSize; i++) {
-                    if(grid[i][j] !== newCol[i]) moved = true;
-                    grid[i][j] = newCol[i];
+            // Merge cells
+            for (let j = 0; j < row.length - 1; j++) {
+                if (row[j] === row[j + 1]) {
+                    row[j] *= 2;
+                    score += row[j];
+                    row.splice(j + 1, 1);
                 }
             }
-            return moved;
+
+            // Fill empty spaces
+            while (row.length < gridSize) row.push(0);
+            if (!left) row.reverse();
+
+            if (row.join(',') !== grid[i].join(',')) {
+                moved = true;
+                grid[i] = row;
+            }
         }
+        return moved;
+    }
+
+    function moveVertical(up) {
+        let moved = false;
+        for (let j = 0; j < gridSize; j++) {
+            let column = [];
+            for (let i = 0; i < gridSize; i++) column.push(grid[i][j]);
+
+            let newCol = column.filter(cell => cell !== 0);
+            if (!up) newCol.reverse();
+
+            // Merge cells
+            for (let i = 0; i < newCol.length - 1; i++) {
+                if (newCol[i] === newCol[i + 1]) {
+                    newCol[i] *= 2;
+                    score += newCol[i];
+                    newCol.splice(i + 1, 1);
+                }
+            }
+
+            // Fill empty spaces
+            while (newCol.length < gridSize) newCol.push(0);
+            if (!up) newCol.reverse();
+
+            // Update column
+            for (let i = 0; i < gridSize; i++) {
+                if (grid[i][j] !== newCol[i]) moved = true;
+                grid[i][j] = newCol[i];
+            }
+        }
+        return moved;
+    }
 
         function updateScores() {
             document.getElementById('current-score').textContent = score;
